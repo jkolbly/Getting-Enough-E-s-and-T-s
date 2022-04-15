@@ -38,16 +38,6 @@ FREQUENCIES = {
 
 PREFERENCES = ["E", "T"]
 
-# FREQUENCIES = {
-#   "A": 0.4,
-#   "B": 0.3,
-#   "C": 0.2,
-#   "D": 0.05,
-#   "E": 0.025
-# }
-
-# PREFERENCES = ["A", "B"]
-
 ORDERED_LETTERS = PREFERENCES + [l for l in FREQUENCIES.keys() if l not in PREFERENCES]
 ORDERED_FREQUENCIES = [FREQUENCIES[l] for l in ORDERED_LETTERS]
 FREQSIZE = len(ORDERED_FREQUENCIES)
@@ -93,15 +83,12 @@ def closest_cache(subcache, key):
 def recursive_sum(length, index=0, counts=[]):
   if index < PREFSIZE:
     prefsremaining = PREFSIZE - index - 1
-    # print(prefsremaining, (length + prefsremaining * (prefsremaining + 3) // 2) // (prefsremaining + 2) + 1, math.ceil((length - 1) / (FREQSIZE - index + 1)) + 1)
     mintodistributeleftovers = math.floor((length + prefsremaining * (FREQSIZE + (1 - prefsremaining) / 2)) / (FREQSIZE + 1)) + 1
-    # lowbound = max(1 + prefsremaining, mintodistributeleftovers, math.ceil((length - 1) / (FREQSIZE - index + 1)) + 1)
     lowbound = max(1 + prefsremaining, mintodistributeleftovers)
     # At minimum, remaining n prefs need 1 + 2 + 3 + ... + n (assuming strict inequality)
     highbound = length - (prefsremaining) * (prefsremaining + 1) // 2
     if counts:
       highbound = min(highbound, counts[-1] - 1)
-    # print(counts, index, prefsremaining, length, lowbound, highbound)
   else:
     lettersafter = FREQSIZE - index
     lowestpref = counts[PREFSIZE - 1]
@@ -111,58 +98,25 @@ def recursive_sum(length, index=0, counts=[]):
     cache_key = (lowestpref, length, index)
     if cache_key in sum_cache:
       return sum_cache[cache_key]
-    # cache_key = (index, lowestpref, length)
-    # subcache_key = (lowbound, highbound)
-    # if cache_key in sum_cache and subcache_key in sum_cache[cache_key]:
-    #   return sum_cache[cache_key][subcache_key]
-  # print(counts, index, lowbound, highbound)
 
-  # prob = D(ORDERED_FREQUENCIES[index])
   tot = 0
-  # if index >= PREFSIZE and (cache_key in sum_cache) and (closest := closest_cache(sum_cache[cache_key], subcache_key)):
-  #   tot = sum_cache[cache_key][closest]
-  #   lowmidbound = closest[0] - 1
-  #   highmidbound = closest[1] + 1
-  #   r = it.chain(range(lowbound, lowmidbound + 1), range(highmidbound, highbound + 1))
-  #   # print(closest, (lowbound, highbound), [i for i in it.chain(range(lowbound, lowmidbound + 1), range(highmidbound, highbound + 1))])
-  #   print(closest, (lowbound, highbound))
-  # else:
-  #   r = range(lowbound, highbound + 1)
+
   if index == 0:
     bar = alive_bar(highbound - lowbound + 1)
   else:
     bar = nullcontext()
   with bar as bar:
     for c in range(lowbound, highbound + 1):
-      # print(c)
       nextiter = recursive_sum(length - c, index + 1, counts + [c]) if index + 1 < FREQSIZE else 1
       toadd = nextiter * exponent(index, c) / factorial(c)
       if index + 1 == FREQSIZE:
-        # print("Reached end:", counts + [c, length - c])
         toadd *= exponent(-1, length - c) / factorial(length - c)
       tot += toadd
       if index == 0:
         bar()
   if index >= PREFSIZE:
     sum_cache[cache_key] = tot
-    # if cache_key not in sum_cache:
-    #   sum_cache[cache_key] = {}
-    # sum_cache[cache_key][subcache_key] = tot
-  # print("Returning")
   return tot
-
-# factorial_cache = { 0: 1 }
-# def factorial(x):
-#   if x not in factorial_cache:
-#     f = 1
-#     for i in range(x, 1, -1):
-#       if i in factorial_cache:
-#         f *= factorial_cache[i]
-#         break
-#       else:
-#         f *= i
-#     factorial_cache[x] = f
-#   return factorial_cache[x]
 
 exponent_cache = [[D(1)] for i in range(len(ORDERED_FREQUENCIES) + 1)]
 def exponent(index, power):
@@ -251,83 +205,5 @@ def binary_search(target, lowbound, highbound):
     return binary_search(target, lowbound, mid)
   else:
     return binary_search(target, mid, highbound)
-  
-# def probability(n, trials):
-#   success = 0
-#   tot = 0
-#   for i in range(trials):
-#     tot += 1
-#     string = [random_letter() for i in range(n)]
-#     counts = {}
-#     E = len([c for c in string if c == "E"])
-#     T = len([c for c in string if c == "T"])
-#     if T >= E:
-#       continue
-#     works = True
-#     for l in FREQUENCIES.keys():
-#       if l != "T" and l != "E":
-#         count = len([c for c in string if c == l])
-#         if count >= T or count >= E:
-#           works = False
-#           break
-#     if works:
-#       success += 1
-#   return success / tot
 
-# def min_len_for(p, trials):
-#   if p < 0 or p > 1: return False
-#   min = 1
-#   max = 1000
-#   while True:
-#     n = (min + max) // 2
-#     prob = probability(n, trials)
-#     print(n, prob)
-#     if prob >= p:
-#       max = n
-#     if prob < p:
-#       min = n
-#       probmax = probability(max, trials)
-#       if probmax < p:
-#         min = max
-#         max *= 2
-#     if min + 1 == max:
-#       if prob < p:
-#         max *= 2
-#       else:
-#         return min
-#     n += 1
-
-# def min_len_for(p, trials):
-#   n = 1
-#   while True:
-#     prob = probability(n, trials)
-#     print(n, prob)
-#     if prob >= p:
-#       return n
-#     n += 1
-
-# L = 100
-# print(brute_probability(L, 10000))
-# print(get_computed_prob(L))
-
-print(get_computed_prob(100))
-# print(brute_probability(618, 1000000))
-# print(brute_probability(619, 1000000))
-
-# print(compute_prob(100))
-# print(smart_search(0.5))
-
-# for i in range(100, 100 * 100, 100):
-#   print("%s - %s" % (i, get_computed_prob(i)))
-
-# for i in range(26, 100):
-#   brute = brute_probability(i, 10000)
-#   comp = float(compute_prob(i))
-#   err = abs((brute - comp) / (brute) * 100)
-#   print("Length: %s Brute: %s Calculated: %s Error: %s%%" % (i, brute, round(comp, 4), round(err, 2)))
-
-# l = min_len_for(0.5, 100)
-# print(probability(l, 10000))
-
-# 100 -> 0.105381
-# 300 -> 0.300386
+print("Solution: %s Probability: %s Brute forced: %s" % (sol := smart_search(0.5), get_computed_prob(sol), brute_probability(sol, 10000)))
