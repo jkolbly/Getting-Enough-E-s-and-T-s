@@ -1,0 +1,1 @@
+gfortran main.f90 -o montecarlo > /dev/null 2>&1

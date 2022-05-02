@@ -1,0 +1,3 @@
+f951: Warning: command-line option ‘-Wformat=1’ is valid for C/C++/ObjC/ObjC++ but not for Fortran
+f951: Warning: command-line option ‘-Wformat-security’ is valid for C/C++/ObjC/ObjC++ but not for Fortran
+f951: Warning: ‘-Werror=’ argument ‘-Werror=format-security’ is not valid for Fortran

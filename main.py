@@ -10,6 +10,8 @@ from scipy import stats
 import multiprocessing
 import tqdm
 import functools
+import timeit
+import monteflib
 
 decimal.getcontext().prec = 100
 
@@ -199,12 +201,16 @@ def brute_probability_single_thread(length, trialsize):
   return success
   # results[index] = success
 
-def brute_probability(length, trials, processnum=8, batchsize=100):
+def fortran_single_process(length, trialsize):
+  return monteflib.trial(length, trialsize)
+
+def brute_probability(length, trials, processnum=8, batchsize=10000):
   total_trials = trials // batchsize * batchsize
 
   total_success = 0
   batches = total_trials // batchsize
-  process_func = functools.partial(brute_probability_single_thread, length)
+  # process_func = functools.partial(brute_probability_single_thread, length)
+  process_func = functools.partial(fortran_single_process, length)
   with multiprocessing.Pool(processes=processnum) as pool:
     for r in tqdm.tqdm(pool.imap_unordered(process_func, [batchsize] * batches), total = batches):
       total_success += r
@@ -366,4 +372,7 @@ def monte_carlo_bounds(target, trialsize, certainty):
 # print("Solution: %s Probability: %s Brute forced: %s" % (sol := smart_search(0.5), get_computed_prob(sol), brute_probability(sol, 1000)))
 
 if __name__ == "__main__":
-  print(monte_carlo_progression(0.5, 0.01))
+  # print(timeit.timeit(lambda : print(brute_probability(1024, 1000000)), number=1))
+  # print(timeit.timeit(lambda : print(monteflib.trial(1024, 10000)), number=1))
+  # print(monte_carlo_progression(0.5, 0.01))
+  print(monte_carlo_progression(0.99, 0.01))
