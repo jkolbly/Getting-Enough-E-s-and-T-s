@@ -373,6 +373,8 @@ def monte_carlo_bounds(target, trialsize, certainty):
 
 if __name__ == "__main__":
   # print(timeit.timeit(lambda : print(brute_probability(1024, 1000000)), number=1))
-  # print(timeit.timeit(lambda : print(monteflib.trial(1024, 10000)), number=1))
+  # print(timeit.timeit(lambda : print(monteflib.trial(1024, 1000000)), number=1))
   # print(monte_carlo_progression(0.5, 0.01))
+  print(monte_carlo_progression(0.99, 0.1))
+  print(monte_carlo_progression(0.99, 0.05))
   print(monte_carlo_progression(0.99, 0.01))
