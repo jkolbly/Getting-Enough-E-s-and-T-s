@@ -197,9 +197,9 @@ def accuracy_test(target, length):
   alt = "greater" if prob > target else "less"
   return stats.binom_test(successes, n=trialsize, p=target, alternative=alt)
 
-def monte_carlo_trial(length, trialsize, force=False):
+def monte_carlo_trial(length, trialsize):
   cached_trials = trial_cache[length][2] if length in trial_cache else 0
-  if trialsize > cached_trials and not force:
+  if trialsize > cached_trials:
     print("Computing monte carlo trial with length %s (%s trials)" % (length, trialsize))
     res = brute_probability(length, trialsize - cached_trials)
     if length in trial_cache:
@@ -208,11 +208,6 @@ def monte_carlo_trial(length, trialsize, force=False):
       trial_cache[length][0] = trial_cache[length][1] / trial_cache[length][2]
     else:
       trial_cache[length] = list(res)
-    save_trial_cache()
-  elif trialsize > cached_trials:
-    print("Computing monte carlo trial with length %s (%s trials)" % (length, trialsize))
-    res = brute_probability(length, trialsize)
-    trial_cache[length] = list(res)
     save_trial_cache()
   return trial_cache[length]
 
