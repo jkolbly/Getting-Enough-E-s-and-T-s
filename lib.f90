@@ -326,16 +326,6 @@ function trial(n, trials) result (successes)
     25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, &
     25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 26, 26, 26, 26, 26, 26, 26, 26 /)
 
-  ! constants
-  ! integer, parameter, dimension(26) :: probs = (/ &
-  !   1202, 0910, 0812, 0149, 0271, &
-  !   0432, 0230, 0203, 0592, 0731, &
-  !   0010, 0069, 0398, 0261, 0695, &
-  !   0768, 0182, 0011, 0602, 0628, &
-  !   0288, 0111, 0209, 0017, 0211, 0008 /)
-
-  ! integer, dimension(10000) :: selectarr
-
   integer, intent(in) :: n
   integer, intent(in) :: trials
   integer :: successes
@@ -349,29 +339,12 @@ function trial(n, trials) result (successes)
 
   successes = 0
 
-  ! i = 1
-  ! do t = 1, 26
-  !   do l = 1, probs(t)
-  !     selectarr(i) = t
-  !     i = i + 1
-  !   end do
-  ! end do
-
   trialloop: do t = 1, trials
     call random_number(rands)
     counts = (/ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /)
     do l = 1, n
       i = selectarr(ceiling(rands(l) * 10000))
       counts(i) = counts(i) + 1
-!        do i = 1, 25
-!          rands(l) = rands(l) - probs(i)
-!          if (rands(l) <= 0) then
-!            counts(i) = counts(i) + 1
-!            exit
-!          else if (i == 25) then
-!            counts(26) = counts(26) + 1
-!          end if
-!        end do
     end do
 
     if (counts(2) >= counts(1)) then

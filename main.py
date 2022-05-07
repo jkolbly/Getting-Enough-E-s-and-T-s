@@ -1,16 +1,12 @@
-import random
 import math
 import decimal
 from decimal import Decimal as D
-from tkinter import FALSE
 from alive_progress import alive_bar
 from contextlib import nullcontext
-import itertools as it
 from scipy import stats
 import multiprocessing
 import tqdm
 import functools
-import timeit
 import monteflib
 
 decimal.getcontext().prec = 100
@@ -98,12 +94,6 @@ def compute_prob(length):
 
 sum_cache = {}
 
-def closest_cache(subcache, key):
-  closenesses = {k:(k[0] - key[0] + key[1] - k[1]) for k in subcache.keys() if k[0] >= key[0] and k[1] <= key[1]}
-  if not closenesses:
-    return None
-  return min(closenesses, key=closenesses.get)
-
 def recursive_sum(length, index=0, counts=[]):
   if index < PREFSIZE:
     prefsremaining = PREFSIZE - index - 1
@@ -160,47 +150,6 @@ def factorial(x):
       factorial_cache.append(i * factorial_cache[-1])
   return factorial_cache[x]
 
-def random_letter():
-  rand = random.random()
-  for l, f in FREQUENCIES.items():
-    rand -= f
-    if rand < 0:
-      return l
-  return "Z"
-
-def test_distribution(letter, num):
-  count = 0
-  for i in range(num):
-    if random_letter() == letter:
-      count += 1
-  print("Got %s for frequency of %s (expected %s)" % (count / num, letter, FREQUENCIES[letter]))
-
-def random_index():
-  rand = random.random()
-  for i in range(len(ORDERED_FREQUENCIES)):
-    rand -= ORDERED_FREQUENCIES[i]
-    if rand <= 0:
-      return i
-  return len(ORDERED_FREQUENCIES)
-
-def single_trial(length):
-  counts = [0] * (len(ORDERED_FREQUENCIES) + 1)
-  for i in range(length):
-    counts[random_index()] += 1
-  for p in range(PREFSIZE):
-    c = counts.pop(0)
-    if next((x for x in counts if x >= c), None) is not None:
-      return False
-  return True
-
-def brute_probability_single_thread(length, trialsize):
-  success = 0
-  for i in range(trialsize):
-    if single_trial(length):
-      success += 1
-  return success
-  # results[index] = success
-
 def fortran_single_process(length, trialsize):
   return monteflib.trial(length, trialsize)
 
@@ -209,30 +158,11 @@ def brute_probability(length, trials, processnum=8, batchsize=10000):
 
   total_success = 0
   batches = total_trials // batchsize
-  # process_func = functools.partial(brute_probability_single_thread, length)
   process_func = functools.partial(fortran_single_process, length)
   with multiprocessing.Pool(processes=processnum) as pool:
     for r in tqdm.tqdm(pool.imap_unordered(process_func, [batchsize] * batches), total = batches):
       total_success += r
       pass
-  # with alive_bar(total_trials) as bar:
-    # threads = [threading.Thread(target=brute_probability_single_thread, args=(bar, results, i, length, batchsize)) for i in range(threadnum)]
-    # threads = []
-    # processes = []
-    # for i in range(threadnum):
-    #   process = multiprocessing.Process(target=brute_probability_single_thread, args=(bar, results, i, length, batchsize))
-    #   processes.append(process)
-    #   # thread = threading.Thread(target=brute_probability_single_thread, args=(bar, results, i, length, batchsize))
-    #   # threads.append(thread)
-    # # for t in threads:
-    # #   t.start()
-    # # for t in threads:
-    # #   t.join()
-    # for p in processes:
-    #   p.start()
-    # for p in processes:
-    #   p.join()
-  # total_success = sum(results)
   return total_success / total_trials, total_success, total_trials
 
 def smart_search(target_p):
@@ -288,29 +218,9 @@ def monte_carlo_trial(length, trialsize, force=False):
 
 def monte_carlo_progression(target, certainty=0.001):
   lowbound, highbound = monte_carlo_bounds(target, 1000, certainty)
-  # guess = monte_carlo_binary_search(target, 1000, lowbound, highbound)
-  # print(guess)
-  
-  # res = monte_carlo_step(target, 1000)
-  # verify_probs(target, 1000, certainty)
 
   res = monte_carlo_binary_search(target, lowbound, highbound, certainty)
   return res
-
-# def monte_carlo_binary_search(target, trialsize, lowbound, highbound):
-#   if highbound == lowbound + 1:
-#     return highbound
-#   mid = (lowbound + highbound) // 2
-#   midprob = monte_carlo_trial(mid, trialsize)[0]
-#   if midprob >= target:
-#     return monte_carlo_binary_search(target, trialsize, lowbound, mid)
-#   else:
-#     return monte_carlo_binary_search(target, trialsize, mid, highbound)
-
-def verify_probs(target, trialsize, certainty):
-  while totest := [k for k in trial_cache.keys() if accuracy_test(target, k) > certainty]:
-    for l in totest:
-      monte_carlo_trial(l, trial_cache[l][2] * 2)
 
 def monte_carlo_verified_trial(target, length, certainty, startsize=100):
   monte_carlo_trial(length, startsize)
@@ -329,33 +239,6 @@ def monte_carlo_binary_search(target, lowbound, highbound, certainty):
   else:
     return monte_carlo_binary_search(target, mid, highbound, certainty)
     
-# def monte_carlo_step(target, trialsize):
-#   tsize = trialsize
-#   old_higher = -1
-#   old_lower = -1
-#   repeat_count = 0
-#   while True:
-#     highest_lower = max([k for k,v in trial_cache.items() if v[0] < target], key=lambda n: trial_cache[n][0])
-#     monte_carlo_trial(highest_lower, tsize, repeat_count > 0)
-
-#     lowest_higher = min([k for k,v in trial_cache.items() if v[0] >= target], key=lambda n: trial_cache[n][0])
-#     monte_carlo_trial(lowest_higher, tsize, repeat_count > 0)
-
-#     mid = (highest_lower + lowest_higher) // 2
-#     monte_carlo_trial(mid, tsize, repeat_count > 0)
-
-#     if old_higher == lowest_higher and old_lower == highest_lower:
-#       if repeat_count >= 10 and mid + 1 == lowest_higher:
-#         return lowest_higher
-#       tsize *= 2
-#       repeat_count += 1
-#     else:
-#       tsize = trialsize
-#       repeat_count = 0
-
-#     old_higher = lowest_higher
-#     old_lower = highest_lower
-
 def monte_carlo_bounds(target, trialsize, certainty):
   low = [x for x in [1]][0]
   while True:
@@ -364,17 +247,7 @@ def monte_carlo_bounds(target, trialsize, certainty):
       return low // 2, low
     low *= 2
 
-# for i in range(1, 11):
-#   brute_probability(1024, 10000, i)
-# if __name__ == "__main__":
-#   print(brute_probability(1024, 1000000, 8))
-
-# print("Solution: %s Probability: %s Brute forced: %s" % (sol := smart_search(0.5), get_computed_prob(sol), brute_probability(sol, 1000)))
-
 if __name__ == "__main__":
-  # print(timeit.timeit(lambda : print(brute_probability(1024, 1000000)), number=1))
-  # print(timeit.timeit(lambda : print(monteflib.trial(1024, 1000000)), number=1))
-  # print(monte_carlo_progression(0.5, 0.01))
   print(monte_carlo_progression(0.99, 0.1))
   print(monte_carlo_progression(0.99, 0.05))
   print(monte_carlo_progression(0.99, 0.01))
